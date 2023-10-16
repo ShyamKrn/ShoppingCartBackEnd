@@ -11,9 +11,11 @@ import com.shyam.cartsservice.exception.CustomerException;
 import com.shyam.cartsservice.exception.ProductException;
 import com.shyam.cartsservice.model.Cart;
 import com.shyam.cartsservice.model.Customer;
+import com.shyam.cartsservice.model.History;
 import com.shyam.cartsservice.model.Product;
 import com.shyam.cartsservice.repository.CartRepo;
 import com.shyam.cartsservice.repository.CustomerRepo;
+import com.shyam.cartsservice.repository.HistoryRepo;
 import com.shyam.cartsservice.repository.ProductRepo;
 
 
@@ -25,6 +27,9 @@ public class CartServiceImpl implements CartService {
 
 	@Autowired
 	private CustomerRepo crRepo;
+	
+	@Autowired
+	private HistoryRepo hRepo;
 
 	@Autowired
 	private ProductRepo pRepo;
@@ -224,6 +229,19 @@ public class CartServiceImpl implements CartService {
 
 		cRepo.save(cart);
 		return cart;
+	}
+	
+	@Override
+	public History addProductToHistory(String cId){
+		Customer customer = crRepo.findById(cId).get();
+		Cart cart = customer.getCart();
+		int cartId = cart.getCartId();
+		History history=new History();
+		history.setPhId(cartId);
+		history.setProducts(cRepo.findById(cartId).get().getProducts());
+		hRepo.save(history);
+		return history;
+		 
 	}
 
 }

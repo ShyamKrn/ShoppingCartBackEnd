@@ -1,5 +1,6 @@
 package com.shyam.cartsservice.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,9 +26,11 @@ import com.shyam.cartsservice.exception.CustomerException;
 import com.shyam.cartsservice.exception.ProductException;
 import com.shyam.cartsservice.model.Cart;
 import com.shyam.cartsservice.model.Customer;
+import com.shyam.cartsservice.model.History;
 import com.shyam.cartsservice.model.Product;
 import com.shyam.cartsservice.repository.CartRepo;
 import com.shyam.cartsservice.repository.CustomerRepo;
+import com.shyam.cartsservice.repository.HistoryRepo;
 import com.shyam.cartsservice.repository.ProductRepo;
 import com.shyam.cartsservice.service.CartService;
 
@@ -48,12 +51,29 @@ public class CartController {
 	private ProductRepo prepo;
 	
 	@Autowired
+	private HistoryRepo hrepo;
+	
+	@Autowired
 	private RestTemplate restTemplate;
 	
 	@Autowired
 	private CustomerRepo cusRepo;
 	
-	
+	@PostMapping("/addProductToHistory/{customerId}")
+	public History addProductToHistory(@PathVariable String customerId ) {
+		return cService.addProductToHistory(customerId);
+	} 
+	@GetMapping("/getHistoryProducts/{customerId}")
+	public List<Product> getHistoryProducts(@PathVariable String customerId){
+		Customer customerObj = cusRepo.findById(customerId).get();
+		int cartId = customerObj.getCart().getCartId();
+		
+		History historyObj = hrepo.findById(cartId).get();
+		
+		List<Product> productList = new ArrayList<>();
+		productList = historyObj.getProducts();
+		return productList;
+	}
 	
 	@GetMapping("/addToDatabase")
 	public void addToDatabase() {
