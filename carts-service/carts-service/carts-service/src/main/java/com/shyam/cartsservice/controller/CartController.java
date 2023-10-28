@@ -1,11 +1,13 @@
 package com.shyam.cartsservice.controller;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -35,7 +37,9 @@ import com.shyam.cartsservice.repository.ProductRepo;
 import com.shyam.cartsservice.service.CartService;
 
 import jakarta.ws.rs.PATCH;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @CrossOrigin("http://localhost:4200/")
 @RestController
 @RequestMapping("/cart")
@@ -61,6 +65,7 @@ public class CartController {
 	
 	@PostMapping("/addProductToHistory/{customerId}")
 	public History addProductToHistory(@PathVariable String customerId ) {
+		log.info("Product added to History customerId {}",customerId);
 		return cService.addProductToHistory(customerId);
 	} 
 	@GetMapping("/getHistoryProducts/{customerId}")
@@ -73,6 +78,16 @@ public class CartController {
 		List<Product> productList = new ArrayList<>();
 		productList = historyObj.getProducts();
 		return productList;
+	}
+	
+	@GetMapping("/getDate/{customerId}")
+	public Date getDate(@PathVariable String customerId) {
+		Customer customerObj=cusRepo.findById(customerId).get();
+		int cartId=customerObj.getCart().getCartId();
+		
+		History historyObj=hrepo.findById(cartId).get();
+		Date purchaseDate=historyObj.getPurchaseDate();
+		return purchaseDate;
 	}
 	
 	@GetMapping("/addToDatabase")
@@ -102,15 +117,6 @@ public class CartController {
 				    	Optional<Customer> existingCustomer = cusRepo.findById(customer.getCId());
 				       
 				    	if (!existingCustomer.isPresent()) {
-			//	        	Cart cart = new Cart();
-//				        	cart.setCartId(2);
-//				            cart.setProduct_quantity(0); // Set the initial quantity as needed
-//				            cart.setCustomer(customer); // Set the customer reference
-//				            
-//				            // Save the Cart instance
-//				            cartRepo.save(cart);
-//				            
-//				            customer.setCart(cart);
 				            cusRepo.save(customer);
 				        }
 				    }
@@ -118,49 +124,12 @@ public class CartController {
 		
 	}
 
-	//RequestParam("customerId"), @RequestParam("productId")
 	@PostMapping("/add/{cId}/{productId}")
 	public ResponseEntity<Cart> addProductToCart(@PathVariable String cId,
 			@PathVariable Integer productId) throws CartException, CustomerException, ProductException {
 		
 		addToDatabase();
-//		 ResponseEntity<List<Product>> response = restTemplate.exchange(
-//			        "http://localhost:8081/products/view",
-//			        HttpMethod.GET,
-//			        null,
-//			        new ParameterizedTypeReference<List<Product>>() {});
-//
-//			    List<Product> products = response.getBody();
-//			    for (Product product : products) {
-//			    	Optional<Product> existingProduct = prepo.findById(product.getProductId());
-//			        if (!existingProduct.isPresent()) {
-//			            prepo.save(product);
-//			        }
-//			    }
-//			    
-//			    ResponseEntity<List<Customer>> secresponse = restTemplate.exchange(
-//				        "http://localhost:9898/auth/customers",
-//				        HttpMethod.GET,
-//				        null,
-//				        new ParameterizedTypeReference<List<Customer>>() {});
-//
-//				    List<Customer> customers = secresponse.getBody();
-//				    for (Customer customer : customers) {
-//				    	Optional<Customer> existingCustomer = cusRepo.findById(customer.getCId());
-//				       
-//				    	if (!existingCustomer.isPresent()) {
-//			//	        	Cart cart = new Cart();
-////				        	cart.setCartId(2);
-////				            cart.setProduct_quantity(0); // Set the initial quantity as needed
-////				            cart.setCustomer(customer); // Set the customer reference
-////				            
-////				            // Save the Cart instance
-////				            cartRepo.save(cart);
-////				            
-////				            customer.setCart(cart);
-//				            cusRepo.save(customer);
-//				        }
-//				    }
+		log.info("Product added to cart");
 		return new ResponseEntity<Cart>(cService.addProductToCart(cId, productId), HttpStatus.OK);
 
 	}

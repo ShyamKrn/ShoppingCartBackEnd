@@ -1,7 +1,10 @@
 package com.shyam.cartsservice.service;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -232,16 +235,34 @@ public class CartServiceImpl implements CartService {
 	}
 	
 	@Override
-	public History addProductToHistory(String cId){
-		Customer customer = crRepo.findById(cId).get();
-		Cart cart = customer.getCart();
-		int cartId = cart.getCartId();
-		History history=new History();
-		history.setPhId(cartId);
-		history.setProducts(cRepo.findById(cartId).get().getProducts());
-		hRepo.save(history);
-		return history;
-		 
+	public History addProductToHistory(String cId) {
+	    Customer customer = crRepo.findById(cId).get();
+	    Cart cart = customer.getCart();
+	    int cartId = cart.getCartId();
+	    History history = hRepo.findById(cartId).orElse(null);
+
+	    if (history == null) {
+	        history = new History();
+	        history.setPhId(cartId);
+	        history.setProducts(new ArrayList<>());
+	    }
+
+	    List<Product> existingProducts = history.getProducts();
+	    Set<Product> uniqueProducts = new HashSet<>(existingProducts);
+
+	    List<Product> newProducts = cRepo.findById(cartId).get().getProducts();
+
+	    for (Product product : newProducts) {
+	        if (!uniqueProducts.contains(product)) {
+	            existingProducts.add(product);
+	            uniqueProducts.add(product); // Add the product to the set to track uniqueness
+	        }
+	    }
+
+	    history.setProducts(existingProducts);
+	    history.setPurchaseDate(new Date());
+	    hRepo.save(history);
+	    return history;
 	}
 
 }

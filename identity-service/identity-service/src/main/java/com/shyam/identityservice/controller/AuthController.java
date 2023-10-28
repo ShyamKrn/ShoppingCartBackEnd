@@ -93,7 +93,6 @@ public class AuthController {
 	
 	@PostMapping("/generatetoken")
 	public AuthRequest authenticateAndGetToken(@RequestBody AuthRequest authRequest){ 
-		//for token creation
 		Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
 		if(authentication.isAuthenticated()) {
 			authRequest.setToken(jwtService.generateToken(authRequest.getUsername()));
@@ -110,6 +109,21 @@ public class AuthController {
 	public String validateToken(@RequestParam String token) {
 		jwtService.validateByToken(token);
 		return "Token is valid";
+	}
+	
+    @PostMapping("/updateCustomer")
+    public AuthRequest updateCustomer(@RequestBody AuthRequest authRequest) throws Exception {
+    	return service.updateUser(authRequest);
+    }
+    
+	@PostMapping("/sendResetVerificationCode/{userName}")
+	public boolean sendResetVerificationCode(@PathVariable String userName) {
+		return service.sendResetVerificationCode(userName);
+	}
+	
+	@GetMapping("/verifyAccountForPasswordReset/{token}")
+	public boolean verifyAccountForPasswordReset(@PathVariable("token") String confirmationToken) {
+		return service.verifyAccountForPasswordReset(confirmationToken);
 	}
 }
 

@@ -1,4 +1,5 @@
 package com.shyam.cartsservice.model;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -13,4 +14,5 @@ public class History {
 	@Id
 	private Integer phId;
 	List<Product> products;
+	private Date purchaseDate;
 }

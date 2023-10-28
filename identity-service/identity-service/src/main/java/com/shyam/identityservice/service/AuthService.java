@@ -13,8 +13,10 @@ import com.shyam.identityservice.dto.AuthRequest;
 import com.shyam.identityservice.entity.Cart;
 import com.shyam.identityservice.entity.ConfirmationToken;
 import com.shyam.identityservice.entity.Customer;
+import com.shyam.identityservice.entity.PasswordConfirmationToken;
 import com.shyam.identityservice.repository.AuthRepo;
 import com.shyam.identityservice.repository.CartRepository;
+import com.shyam.identityservice.repository.PasswordTokenRepo;
 import com.shyam.identityservice.repository.TokenCodeRepo;
 import com.shyam.identityservice.repository.UserCredentialRepository;
 
@@ -42,6 +44,9 @@ public class AuthService {
     
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private PasswordTokenRepo passwordToken;
     
     
     public boolean sendVerificationCode(AuthRequest authRequest) {
@@ -135,6 +140,56 @@ public class AuthService {
 		}
 		return true;
 	}
+    
+    public boolean sendResetVerificationCode(String userName) {
+
+		Optional<AuthRequest> obj = authRepo.findById(userName);
+		if(!obj.isEmpty()) {
+			PasswordConfirmationToken passconfirmationToken  = new PasswordConfirmationToken(userName);
+			passwordToken.save(passconfirmationToken);
+			
+			SimpleMailMessage mailMessage = new SimpleMailMessage();
+			mailMessage.setTo(userName);
+			mailMessage.setSubject("Change Password");
+			mailMessage.setText("To proceed with password reset, enter this code : " +
+								passconfirmationToken.getPassConfirmationToken() );
+			emailService.sendMail(mailMessage);
+			return true;
+		}
+		else {
+			return false;
+		}
+		
+	}
+    
+    public boolean verifyAccountForPasswordReset(String passconfirmationToken) {
+		Optional<PasswordConfirmationToken> obj = passwordToken.findById(passconfirmationToken);
+		if(!obj.isEmpty()) {
+			return true;
+		}
+		return false;
+	}
+    
+    public AuthRequest updateUser(AuthRequest authRequest) throws Exception {
+        Optional<AuthRequest> opt = authRepo.findById(authRequest.getUsername());
+        if (opt.isPresent()) {
+            AuthRequest existingAuth = opt.get();
+            String newPassword = authRequest.getPassword();
+
+            if (newPassword != null) {
+                existingAuth.setPassword(newPassword);
+                Customer customer = repository.findByEmail(existingAuth.getUsername()).orElseThrow(() -> new Exception("Customer not found"));
+                customer.setPassword(passwordEncoder.encode(newPassword));
+                repository.save(customer);
+            }
+
+            // You can add similar checks and updates for other fields here
+
+            return authRepo.save(existingAuth);
+        } else {
+            throw new Exception("User not found");
+        }
+    }
     
     public List<Customer> getAllCustomer()
     {
